@@ -18,6 +18,9 @@ jobs:
         with:
           version: 9.12.2
 
+      - name: Enable Corepack
+        run: corepack enable
+
       # 2 Then setup node
       - name: Setup Node 22
         uses: actions/setup-node@v4
