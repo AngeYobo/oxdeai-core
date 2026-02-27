@@ -31,6 +31,13 @@ export type RecursionState = {
   max_depth: Record<string, number | undefined>;
 };
 
+export type ToolLimitsState = {
+  window_seconds: number;
+  max_calls: Record<string, number | undefined>;
+  max_calls_by_tool?: Record<string, Record<string, number | undefined> | undefined>;
+  calls: Record<string, Array<{ ts: number; tool?: string }> | undefined>;
+};
+
 export type State = {
   policy_version: string;
   period_id: string;
@@ -66,7 +73,9 @@ export type State = {
     active: Record<string, number>;             // per agent
     active_auths: Record<string, Record<string, { expires_at: number }>>;
   };
-   recursion: {
+  recursion: {
     max_depth: Record<string, number>;        // per agent
   };
+
+  tool_limits?: ToolLimitsState;
 };

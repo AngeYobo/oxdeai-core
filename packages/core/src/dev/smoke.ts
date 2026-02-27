@@ -42,6 +42,12 @@ function baseState(): State {
     // NEW
     recursion: {
       max_depth: { "agent-1": 2 }
+    },
+
+    tool_limits: {
+      window_seconds: 60,
+      max_calls: { "agent-1": 2 },
+      calls: {}
     }
   };
 }
@@ -172,6 +178,39 @@ async function main() {
     mustAllow(r4);
 
     console.log("- Release binding test passed");
+  }
+
+  // ---- Test 5: Tool amplification cap ----
+  {
+    const seed = baseState();
+    const state = {
+      ...seed,
+      concurrency: {
+        ...seed.concurrency,
+        max_concurrent: { "agent-1": 10 }
+      }
+    };
+
+    const mk = (nonce: bigint) =>
+      intentBase({
+        nonce,
+        type: "EXECUTE",
+        tool_call: true,
+        tool: "openai.responses"
+      });
+
+    const r1 = engine.evaluatePure(mk(300n), state, { mode: "fail-fast" });
+    mustAllow(r1);
+
+    const r2 = engine.evaluatePure(mk(301n), r1.nextState, { mode: "fail-fast" });
+    mustAllow(r2);
+
+    // third call in same window should DENY (max_calls = 2)
+    const r3 = engine.evaluatePure(mk(302n), r2.nextState, { mode: "fail-fast" });
+    mustDeny(r3);
+    mustIncludeReason(r3, "TOOL_CALL_LIMIT_EXCEEDED");
+
+    console.log("- Tool amplification test passed");
   }
 
   console.log("🎉 All smoke tests passed");

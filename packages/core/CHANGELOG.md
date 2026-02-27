@@ -7,6 +7,35 @@ This project follows Semantic Versioning.
 
 ---
 
+## [0.4.0] - 2026-02-27
+
+### Added
+
+- ToolAmplificationModule (deterministic tool/API call cap per agent per window).
+- `tool_call` and `tool` fields in Intent for explicit tool accounting.
+- `tool_limits` in State for tool-call window enforcement.
+- ReplayModule (state-based replay protection).
+- ConcurrencyModule (active authorization tracking).
+- RecursionDepthModule (bounded agent depth).
+- `evaluatePure()` returning `{ nextState }` for deterministic simulation.
+
+### Changed
+
+- `evaluate()` now acts as `evaluatePure + commit`.
+- Budget and Velocity modules return `stateDelta`.
+- State validation extended to include replay, concurrency, recursion, tool limits.
+
+### Security
+
+- Deterministic containment of:
+  - Budget overflow
+  - Tool-call amplification
+  - Recursion depth escalation
+  - Concurrency explosion
+  - Replay abuse
+
+---
+
 ## [0.2.2] - 2026-02-27
 
 ### Added

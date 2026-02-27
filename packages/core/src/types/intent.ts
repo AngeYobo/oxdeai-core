@@ -12,6 +12,8 @@ type IntentBase = {
   metadata_hash: string; // hex string
   nonce: bigint;
   signature: string; // placeholder in v0.1
+  tool?: string;
+  tool_call?: boolean;
 };
 
 export type Intent =

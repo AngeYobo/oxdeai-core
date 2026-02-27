@@ -16,6 +16,7 @@ import { VelocityModule } from "./modules/VelocityModule.js";
 import { ReplayModule } from "./modules/ReplayModule.js";
 import { ConcurrencyModule } from "./modules/ConcurrencyModule.js";
 import { RecursionDepthModule } from "./modules/RecursionDepthModule.js";
+import { ToolAmplificationModule } from "./modules/ToolAmplificationModule.js";
 
 export type EngineEvalOptions = {
   mode?: "fail-fast" | "collect-all";
@@ -94,7 +95,8 @@ export class PolicyEngine {
       "velocity",
       "replay",
       "concurrency",
-      "recursion"
+      "recursion",
+      "tool_limits"
     ];
     for (const k of requiredTop) {
       if (!(k in state)) return { ok: false, reason: "STATE_INVALID" };
@@ -135,12 +137,18 @@ export class PolicyEngine {
     const rc = (state as any).recursion;
     if (!isObject(rc) || !isObject(rc.max_depth)) return { ok: false, reason: "STATE_INVALID" };
 
+    const tl = (state as any).tool_limits;
+    if (!isObject(tl) || typeof tl.window_seconds !== "number" || !isObject(tl.max_calls) || !isObject(tl.calls)) {
+      return { ok: false, reason: "STATE_INVALID" };
+    }
+
     // Per-agent minimal config for this intent
     const agent = intent.agent_id;
     if (budget.budget_limit[agent] === undefined) return { ok: false, reason: "STATE_INVALID" };
     if (caps[agent] === undefined) return { ok: false, reason: "STATE_INVALID" };
     if (cc.max_concurrent[agent] === undefined) return { ok: false, reason: "STATE_INVALID" };
     if (rc.max_depth[agent] === undefined) return { ok: false, reason: "STATE_INVALID" };
+    if (tl.max_calls[agent] === undefined) return { ok: false, reason: "STATE_INVALID" };
 
     return { ok: true };
 
@@ -239,6 +247,7 @@ export class PolicyEngine {
               ReplayModule(intent, working),
               RecursionDepthModule(intent, working),
               ConcurrencyModule(intent, working),
+              ToolAmplificationModule(intent, working),
               BudgetModule(intent, working),
               VelocityModule(intent, working)
             ];

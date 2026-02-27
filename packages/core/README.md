@@ -135,6 +135,8 @@ const state: State = {
 const intent: Intent = {
   agent_id: "agent-1",
   type: "EXECUTE",
+  tool_call: true,
+  tool: "openai.responses",
   nonce: 42n,
   amount: 100n,
   timestamp: Math.floor(Date.now() / 1000),
@@ -202,6 +204,7 @@ if (rel.decision === "DENY") {
 * **ReplayModule**: nonce window (prevents replay)
 * **RecursionDepthModule**: max planning / tool-call depth
 * **ConcurrencyModule**: max in-flight executions + authorization-bound release
+* **ToolAmplificationModule**: windowed tool/API call caps (prevents tool-call amplification loops)
 * **BudgetModule**: per-period spend cap + per-action cap
 * **VelocityModule**: action count rate limit per window
 
@@ -234,6 +237,5 @@ if (rel.decision === "DENY") {
 ## License
 
 Apache-2.0
-
 
 

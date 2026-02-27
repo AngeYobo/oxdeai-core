@@ -26,6 +26,7 @@ export const ReasonCode = {
   AUTH_INTENT_MISMATCH: "AUTH_INTENT_MISMATCH",
   INTERNAL_ERROR: "INTERNAL_ERROR",
   CONCURRENCY_RELEASE_INVALID: "CONCURRENCY_RELEASE_INVALID",
+  TOOL_CALL_LIMIT_EXCEEDED: "TOOL_CALL_LIMIT_EXCEEDED",
 } as const;
 
 export type ReasonCode = (typeof ReasonCode)[keyof typeof ReasonCode];
