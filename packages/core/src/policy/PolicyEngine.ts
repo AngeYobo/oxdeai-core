@@ -13,6 +13,14 @@ import { AllowlistModule } from "./modules/AllowlistModule.js";
 import { BudgetModule } from "./modules/BudgetModule.js";
 import { VelocityModule } from "./modules/VelocityModule.js";
 
+import { ReplayModule } from "./modules/ReplayModule.js";
+import { ConcurrencyModule } from "./modules/ConcurrencyModule.js";
+import { RecursionDepthModule } from "./modules/RecursionDepthModule.js";
+
+export type EngineEvalOptions = {
+  mode?: "fail-fast" | "collect-all";
+};
+
 export type EvaluateOutput =
   | { decision: "ALLOW"; reasons: []; authorization: Authorization }
   | { decision: "DENY"; reasons: ReasonCode[] };
@@ -21,23 +29,45 @@ export type EngineOptions = {
   policy_version: string;
   engine_secret: string;
   authorization_ttl_seconds: number;
+  deny_mode?: "collect-all" | "fail-fast";
 };
 
 function isObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null;
 }
 
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return isObject(v) && !Array.isArray(v);
+}
+
+function mergeInto(target: Record<string, unknown>, source: Record<string, unknown>): void {
+  for (const key of Object.keys(source)) {
+    const src = source[key];
+    const dst = target[key];
+    if (isPlainObject(src) && isPlainObject(dst)) {
+      mergeInto(dst, src);
+      continue;
+    }
+    target[key] = src;
+  }
+}
+
+function deepMerge<T>(base: T, patch: Partial<T>): T {
+  if (!isPlainObject(base) || !isPlainObject(patch)) return (patch as T) ?? base;
+
+  const out: Record<string, unknown> = { ...(base as any) };
+  mergeInto(out, patch as any);
+  return out as T;
+}
+
+const MODULES = [KillSwitchModule, AllowlistModule, BudgetModule, VelocityModule] as const;
+
 export class PolicyEngine {
   private readonly opts: EngineOptions;
-  private readonly usedNonces = new Set<string>(); // v0.1 replay protection (in-memory)
   public readonly audit: HashChainedLog = new HashChainedLog();
 
   constructor(opts: EngineOptions) {
     this.opts = opts;
-  }
-
-  private nonceKey(intent: Intent): string {
-    return `${intent.agent_id}:${intent.nonce.toString()}`;
   }
 
   /**
@@ -53,8 +83,19 @@ export class PolicyEngine {
       return { ok: false, reason: "STATE_INVALID" };
     }
 
+
     // Required top-level keys
-    const requiredTop = ["period_id", "kill_switch", "allowlists", "budget", "max_amount_per_action", "velocity"];
+    const requiredTop = [
+      "period_id",
+      "kill_switch",
+      "allowlists",
+      "budget",
+      "max_amount_per_action",
+      "velocity",
+      "replay",
+      "concurrency",
+      "recursion"
+    ];
     for (const k of requiredTop) {
       if (!(k in state)) return { ok: false, reason: "STATE_INVALID" };
     }
@@ -81,135 +122,46 @@ export class PolicyEngine {
       return { ok: false, reason: "STATE_INVALID" };
     }
 
+    const rp = (state as any).replay;
+    if (!isObject(rp) || typeof rp.window_seconds !== "number" || typeof rp.max_nonces_per_agent !== "number" || !isObject(rp.nonces)) {
+      return { ok: false, reason: "STATE_INVALID" };
+    }
+
+    const cc = (state as any).concurrency;
+    if (!isObject(cc) || !isObject(cc.max_concurrent) || !isObject(cc.active) || !isObject(cc.active_auths)) {
+      return { ok: false, reason: "STATE_INVALID" };
+    }
+
+    const rc = (state as any).recursion;
+    if (!isObject(rc) || !isObject(rc.max_depth)) return { ok: false, reason: "STATE_INVALID" };
+
     // Per-agent minimal config for this intent
     const agent = intent.agent_id;
     if (budget.budget_limit[agent] === undefined) return { ok: false, reason: "STATE_INVALID" };
     if (caps[agent] === undefined) return { ok: false, reason: "STATE_INVALID" };
+    if (cc.max_concurrent[agent] === undefined) return { ok: false, reason: "STATE_INVALID" };
+    if (rc.max_depth[agent] === undefined) return { ok: false, reason: "STATE_INVALID" };
 
+    return { ok: true };
+
+    
+  }
+
+  private validateIntent(intent: Intent): { ok: true } | { ok: false; reason: ReasonCode } {
+    if (intent.type === "RELEASE" && !intent.authorization_id) {
+      return { ok: false, reason: "STATE_INVALID" };
+    }
     return { ok: true };
   }
 
   evaluate(intent: Intent, state: State): EvaluateOutput {
-    // Fail-closed + explicit runtime validation
-    const v = this.validateStateForIntent(state as unknown, intent);
-    if (!v.ok) return { decision: "DENY", reasons: [v.reason] };
+    const out = this.evaluatePure(intent, state, { mode: "fail-fast" });
 
-    // Specific reason for version mismatch
-    if (state.policy_version !== this.opts.policy_version) {
-      return { decision: "DENY", reasons: ["POLICY_VERSION_MISMATCH"] };
-    }
+    if (out.decision === "DENY") return out;
 
-    // From here: try/catch only guards truly unexpected runtime faults
-    try {
-      const intent_hash = sha256HexFromJson(intent);
-      this.audit.append({
-        type: "INTENT_RECEIVED",
-        intent_hash,
-        agent_id: intent.agent_id,
-        timestamp: intent.timestamp
-      });
+    Object.assign(state, out.nextState);
 
-      // Replay protection
-      const nk = this.nonceKey(intent);
-      if (this.usedNonces.has(nk)) {
-        const out: EvaluateOutput = { decision: "DENY", reasons: ["REPLAY_NONCE"] };
-        this.audit.append({
-          type: "DECISION",
-          intent_hash,
-          decision: "DENY",
-          reasons: out.reasons,
-          policy_version: state.policy_version,
-          timestamp: intent.timestamp
-        });
-        return out;
-      }
-
-      const results: PolicyResult[] = [
-        KillSwitchModule(intent, state),
-        AllowlistModule(intent, state),
-        BudgetModule(intent, state),
-        VelocityModule(intent, state)
-      ];
-
-      const denyReasons: ReasonCode[] = [];
-      for (const r of results) if (r.decision === "DENY") denyReasons.push(...r.reasons);
-
-      if (denyReasons.length) {
-        const out: EvaluateOutput = { decision: "DENY", reasons: denyReasons };
-        this.audit.append({
-          type: "DECISION",
-          intent_hash,
-          decision: "DENY",
-          reasons: denyReasons,
-          policy_version: state.policy_version,
-          timestamp: intent.timestamp
-        });
-        return out;
-      }
-
-      // Commit (v0.1 single-threaded assumption)
-      this.usedNonces.add(nk);
-
-      // Update budget spend
-      const spent = state.budget.spent_in_period[intent.agent_id] ?? 0n;
-      state.budget.spent_in_period[intent.agent_id] = spent + intent.amount;
-
-      // Update velocity counter
-      const cfg = state.velocity.config;
-      const c = state.velocity.counters[intent.agent_id];
-      const now = intent.timestamp;
-      if (!c || now >= c.window_start + cfg.window_seconds) {
-        state.velocity.counters[intent.agent_id] = { window_start: now, count: 1 };
-      } else {
-        state.velocity.counters[intent.agent_id] = { window_start: c.window_start, count: c.count + 1 };
-      }
-
-      const state_snapshot_hash = sha256HexFromJson(state);
-      const expires_at = now + this.opts.authorization_ttl_seconds;
-
-      const authPayload = {
-        intent_hash,
-        policy_version: state.policy_version,
-        state_snapshot_hash,
-        decision: "ALLOW" as const,
-        expires_at
-      };
-
-      const engine_signature = engineSignHmac(authPayload, this.opts.engine_secret);
-      const authorization_id = sha256HexFromJson({ ...authPayload, engine_signature });
-
-      const authorization: Authorization = {
-        authorization_id,
-        intent_hash,
-        policy_version: state.policy_version,
-        state_snapshot_hash,
-        decision: "ALLOW",
-        expires_at,
-        engine_signature
-      };
-
-      this.audit.append({
-        type: "DECISION",
-        intent_hash,
-        decision: "ALLOW",
-        reasons: [],
-        policy_version: state.policy_version,
-        timestamp: now
-      });
-
-      this.audit.append({
-        type: "AUTH_EMITTED",
-        authorization_id,
-        intent_hash,
-        expires_at,
-        timestamp: now
-      });
-
-      return { decision: "ALLOW", reasons: [], authorization };
-    } catch {
-      // If validateState() passed, INTERNAL_ERROR should be rare and indicates a true bug.
-      return { decision: "DENY", reasons: ["INTERNAL_ERROR"] };
-    }
+    return { decision: "ALLOW", reasons: [], authorization: out.authorization };
   }
 
   verifyAuthorization(
@@ -242,4 +194,145 @@ export class PolicyEngine {
       return { valid: false, reason: "INTERNAL_ERROR" };
     }
   }
+
+  evaluatePure(intent: Intent, state: State, opts?: EngineEvalOptions):
+    | { decision: "ALLOW"; reasons: []; authorization: Authorization; nextState: State }
+    | { decision: "DENY"; reasons: ReasonCode[] } {
+
+    const mode = opts?.mode ?? "fail-fast";
+
+    const iv = this.validateIntent(intent);
+    if (!iv.ok) return { decision: "DENY", reasons: [iv.reason] };
+
+    // Fail-closed + explicit runtime validation
+    const v = this.validateStateForIntent(state as unknown, intent);
+    if (!v.ok) return { decision: "DENY", reasons: [v.reason] };
+
+    if (state.policy_version !== this.opts.policy_version) {
+      return { decision: "DENY", reasons: ["POLICY_VERSION_MISMATCH"] };
+    }
+
+    try {
+      const intent_hash = sha256HexFromJson(intent);
+      this.audit.append({
+        type: "INTENT_RECEIVED",
+        intent_hash,
+        agent_id: intent.agent_id,
+        timestamp: intent.timestamp
+      });
+
+      // IMPORTANT: start from the original state, but do not mutate it
+      let working: State = state;
+      const denyReasons: ReasonCode[] = [];
+      const t = intent.type ?? "EXECUTE";
+
+      const results: PolicyResult[] =
+        t === "RELEASE"
+          ? [
+              KillSwitchModule(intent, working),
+              ReplayModule(intent, working),
+              ConcurrencyModule(intent, working)
+            ]
+          : [
+              KillSwitchModule(intent, working),
+              AllowlistModule(intent, working),
+              ReplayModule(intent, working),
+              RecursionDepthModule(intent, working),
+              ConcurrencyModule(intent, working),
+              BudgetModule(intent, working),
+              VelocityModule(intent, working)
+            ];
+
+      // Apply deltas in-order to working copy (deterministic), but still pure
+      for (const r of results) {
+        if (r.decision === "DENY") {
+          denyReasons.push(...r.reasons);
+          if (mode === "fail-fast") break;
+        } else if (r.stateDelta) {
+          working = deepMerge(working, r.stateDelta);
+        }
+      }
+
+      if (denyReasons.length) {
+        const out = { decision: "DENY" as const, reasons: denyReasons };
+        this.audit.append({
+          type: "DECISION",
+          intent_hash,
+          decision: "DENY",
+          reasons: denyReasons,
+          policy_version: state.policy_version,
+          timestamp: intent.timestamp
+        });
+        return out;
+      }
+
+      // Authorization is now bound to nextState snapshot
+      const state_snapshot_hash = sha256HexFromJson(working);
+      const now = intent.timestamp;
+      const expires_at = now + this.opts.authorization_ttl_seconds;
+
+      const authPayload = {
+        intent_hash,
+        policy_version: state.policy_version,
+        state_snapshot_hash,
+        decision: "ALLOW" as const,
+        expires_at
+      };
+
+      const engine_signature = engineSignHmac(authPayload, this.opts.engine_secret);
+      const authorization_id = sha256HexFromJson({ ...authPayload, engine_signature });
+
+      const authorization: Authorization = {
+        authorization_id,
+        intent_hash,
+        policy_version: state.policy_version,
+        state_snapshot_hash,
+        decision: "ALLOW",
+        expires_at,
+        engine_signature
+      };
+
+      if (t === "EXECUTE") {
+        const agent = intent.agent_id;
+        const current = working.concurrency.active_auths?.[agent] ?? {};
+
+        working = deepMerge(working, {
+          concurrency: {
+            ...working.concurrency,
+            active_auths: {
+              ...working.concurrency.active_auths,
+              [agent]: {
+                ...current,
+                [authorization.authorization_id]: { expires_at: authorization.expires_at }
+              }
+            }
+          }
+        });
+      }
+
+      this.audit.append({
+        type: "DECISION",
+        intent_hash,
+        decision: "ALLOW",
+        reasons: [],
+        policy_version: state.policy_version,
+        timestamp: now
+      });
+
+      this.audit.append({
+        type: "AUTH_EMITTED",
+        authorization_id,
+        intent_hash,
+        expires_at,
+        timestamp: now
+      });
+
+      return { decision: "ALLOW", reasons: [], authorization, nextState: working };
+    } catch {
+      return { decision: "DENY", reasons: ["INTERNAL_ERROR"] };
+    }
+
+    
+  }
+  
 }

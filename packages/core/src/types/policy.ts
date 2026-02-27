@@ -1,3 +1,5 @@
+import { State } from "../index.js";
+
 export const Decision = {
   ALLOW: "ALLOW",
   DENY: "DENY"
@@ -15,18 +17,21 @@ export const ReasonCode = {
   BUDGET_EXCEEDED: "BUDGET_EXCEEDED",
   PER_ACTION_CAP_EXCEEDED: "PER_ACTION_CAP_EXCEEDED",
   VELOCITY_EXCEEDED: "VELOCITY_EXCEEDED",
+  CONCURRENCY_LIMIT_EXCEEDED: "CONCURRENCY_LIMIT_EXCEEDED",
+  RECURSION_DEPTH_EXCEEDED: "RECURSION_DEPTH_EXCEEDED",
   REPLAY_NONCE: "REPLAY_NONCE",
   REPLAY_DETECTED: "REPLAY_DETECTED",
   AUTH_EXPIRED: "AUTH_EXPIRED",
   AUTH_SIGNATURE_INVALID: "AUTH_SIGNATURE_INVALID",
   AUTH_INTENT_MISMATCH: "AUTH_INTENT_MISMATCH",
-  INTERNAL_ERROR: "INTERNAL_ERROR"
+  INTERNAL_ERROR: "INTERNAL_ERROR",
+  CONCURRENCY_RELEASE_INVALID: "CONCURRENCY_RELEASE_INVALID",
 } as const;
 
 export type ReasonCode = (typeof ReasonCode)[keyof typeof ReasonCode];
 
 export type PolicyResult =
-  | { decision: "ALLOW"; reasons: [] }
+  | { decision: "ALLOW"; reasons: []; stateDelta?: Partial<State> }
   | { decision: "DENY"; reasons: ReasonCode[] };
 
 // Backward-compatible alias for older imports.

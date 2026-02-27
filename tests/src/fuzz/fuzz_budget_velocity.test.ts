@@ -78,7 +78,10 @@ test(`FUZZ(${ITERS}): budget & per-action cap consistency`, () => {
       allowlists: { action_types: ["PAYMENT"], assets: ["USDC"], targets: ["merchant"] },
       budget: { budget_limit: { "agent-A": limit }, spent_in_period: { "agent-A": spent } },
       max_amount_per_action: { "agent-A": cap },
-      velocity: { config: { window_seconds: 60, max_actions: 1000 }, counters: {} }
+      velocity: { config: { window_seconds: 60, max_actions: 1000 }, counters: {} },
+      replay: { window_seconds: 3600, max_nonces_per_agent: 256, nonces: {} },
+      concurrency: { max_concurrent: { "agent-A": 1000 }, active: {}, active_auths: {} },
+      recursion: { max_depth: { "agent-A": 5 } }
     };
 
     const out = engine.evaluate(intent, state);
@@ -124,7 +127,10 @@ test(`FUZZ(${ITERS}): velocity window edge cases`, () => {
       velocity: {
         config: { window_seconds: window, max_actions: maxActions },
         counters: { "agent-A": { window_start: windowStart, count } }
-      }
+      },
+      replay: { window_seconds: 3600, max_nonces_per_agent: 256, nonces: {} },
+      concurrency: { max_concurrent: { "agent-A": 1000 }, active: {}, active_auths: {} },
+      recursion: { max_depth: { "agent-A": 5 } }
     });
 
     const mkIntent = (nonce: bigint, ts: number): Intent => ({

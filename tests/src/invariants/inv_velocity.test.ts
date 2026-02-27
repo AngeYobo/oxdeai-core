@@ -35,7 +35,10 @@ test("INV-3 Velocity denies when exceeded in window", () => {
     velocity: {
       config: { window_seconds: 60, max_actions: 3 },
       counters: { a1: { window_start: 980, count: 3 } }
-    }
+    },
+    replay: { window_seconds: 3600, max_nonces_per_agent: 256, nonces: {} },
+    concurrency: { max_concurrent: { a1: 10 }, active: {}, active_auths: {} },
+    recursion: { max_depth: { a1: 5 } }
   };
 
   const out = engine.evaluate(intent, state);

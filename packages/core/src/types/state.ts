@@ -27,14 +27,25 @@ export type VelocityCounters = Record<
   { window_start: number; count: number } | undefined
 >;
 
+export type RecursionState = {
+  max_depth: Record<string, number | undefined>;
+};
+
 export type State = {
   policy_version: string;
   period_id: string;
 
-  kill_switch: KillSwitchState;
+   kill_switch: {
+    global: boolean;
+    agents: Record<string, boolean>;
+  };
+  
   allowlists: AllowLists;
 
-  budget: BudgetState;
+  budget: {
+    budget_limit: Record<string, bigint>;
+    spent_in_period: Record<string, bigint>;
+  };
 
   // INV-2 Per-action cap (hard cap)
   max_amount_per_action: Record<string, bigint | undefined>;
@@ -42,5 +53,20 @@ export type State = {
   velocity: {
     config: VelocityConfig;
     counters: VelocityCounters;
+  };
+
+  replay: {
+    window_seconds: number;           // e.g. 3600
+    max_nonces_per_agent: number;     // e.g. 256
+    nonces: Record<string, Array<{ nonce: string; ts: number }>>; // per agent
+  };
+
+  concurrency: {
+    max_concurrent: Record<string, number>;     // per agent
+    active: Record<string, number>;             // per agent
+    active_auths: Record<string, Record<string, { expires_at: number }>>;
+  };
+   recursion: {
+    max_depth: Record<string, number>;        // per agent
   };
 };

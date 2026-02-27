@@ -32,7 +32,10 @@ test("INV-1 Budget Safety denies when exceeded", () => {
     allowlists: { action_types: ["PAYMENT"], assets: ["USDC"], targets: ["t1"] },
     budget: { budget_limit: { a1: 10_000_000n }, spent_in_period: { a1: 2_000_000n } },
     max_amount_per_action: { a1: 20_000_000n },
-    velocity: { config: { window_seconds: 60, max_actions: 10 }, counters: {} }
+    velocity: { config: { window_seconds: 60, max_actions: 10 }, counters: {} },
+    replay: { window_seconds: 3600, max_nonces_per_agent: 256, nonces: {} },
+    concurrency: { max_concurrent: { a1: 10 }, active: {}, active_auths: {} },
+    recursion: { max_depth: { a1: 5 } }
   };
 
   const out = engine.evaluate(intent, state);
@@ -69,7 +72,10 @@ test("INV-2 Per-action cap denies when exceeded", () => {
     allowlists: { action_types: ["PAYMENT"], assets: ["USDC"], targets: ["t1"] },
     budget: { budget_limit: { a1: 100_000_000n }, spent_in_period: { a1: 0n } },
     max_amount_per_action: { a1: 5_000_000n },
-    velocity: { config: { window_seconds: 60, max_actions: 10 }, counters: {} }
+    velocity: { config: { window_seconds: 60, max_actions: 10 }, counters: {} },
+    replay: { window_seconds: 3600, max_nonces_per_agent: 256, nonces: {} },
+    concurrency: { max_concurrent: { a1: 10 }, active: {}, active_auths: {} },
+    recursion: { max_depth: { a1: 5 } }
   };
 
   const out = engine.evaluate(intent, state);

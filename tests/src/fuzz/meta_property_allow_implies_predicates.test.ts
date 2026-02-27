@@ -131,7 +131,10 @@ test(`META(${ITERS}): ALLOW implies predicates hold (on pre-state)`, () => {
       velocity: {
         config: { window_seconds: window, max_actions: maxActions },
         counters: hasCounter ? { "agent-A": { window_start: windowStart, count } } : {}
-      }
+      },
+      replay: { window_seconds: 3600, max_nonces_per_agent: 256, nonces: {} },
+      concurrency: { max_concurrent: { "agent-A": 1000 }, active: {}, active_auths: {} },
+      recursion: { max_depth: { "agent-A": 5 } }
     };
 
     // Snapshot PRE-STATE because engine.evaluate mutates state

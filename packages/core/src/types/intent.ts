@@ -1,9 +1,10 @@
 export type ActionType = "PAYMENT" | "PURCHASE" | "PROVISION" | "ONCHAIN_TX";
 
-export type Intent = {
+type IntentBase = {
   intent_id: string;
   agent_id: string;
   action_type: ActionType;
+  depth?: number;
   amount: bigint; // fixed-point integer (e.g., 6 decimals)
   asset?: string;
   target: string;
@@ -12,3 +13,13 @@ export type Intent = {
   nonce: bigint;
   signature: string; // placeholder in v0.1
 };
+
+export type Intent =
+  | (IntentBase & {
+      type?: "EXECUTE";
+      authorization_id?: string;
+    })
+  | (IntentBase & {
+      type: "RELEASE";
+      authorization_id: string;
+    });

@@ -32,7 +32,10 @@ test("INV-Replay: same (agent, nonce) cannot execute twice", () => {
     allowlists: { action_types: ["PAYMENT"], assets: ["USDC"], targets: ["merchant"] },
     budget: { budget_limit: { "agent-A": 10_000_000n }, spent_in_period: { "agent-A": 0n } },
     max_amount_per_action: { "agent-A": 5_000_000n },
-    velocity: { config: { window_seconds: 60, max_actions: 10 }, counters: {} }
+    velocity: { config: { window_seconds: 60, max_actions: 10 }, counters: {} },
+    replay: { window_seconds: 3600, max_nonces_per_agent: 256, nonces: {} },
+    concurrency: { max_concurrent: { "agent-A": 10 }, active: {}, active_auths: {} },
+    recursion: { max_depth: { "agent-A": 5 } }
   };
 
   // First execution should pass
