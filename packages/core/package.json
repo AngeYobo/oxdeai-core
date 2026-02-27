@@ -17,9 +17,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Angeyobo/oxdeai-core.git"
+    "url": "git+https://github.com/AngeYobo/oxdeai-core.git",
+    "directory": "packages/core"
   },
-  "homepage": "https://github.com/AngeYobo/oxdeai-core#readme",
+  "homepage": "https://github.com/AngeYobo/oxdeai-core/tree/main/packages/core",
   "bugs": {
     "url": "https://github.com/AngeYobo/oxdeai-core/issues"
   },
