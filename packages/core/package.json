@@ -1,12 +1,47 @@
 {
   "name": "@oxdeai/core",
-  "version": "0.1.1",
+  "version": "0.2.0",
+  "license": "Apache-2.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Angeyobo/oxdeai-core.git"
+  },
+  "homepage": "https://github.com/AngeYobo/oxdeai-core#readme",
+  "bugs": {
+    "url": "https://github.com/AngeYobo/oxdeai-core/issues"
+  },
+  "keywords": [
+    "ai-agents",
+    "agent-economy",
+    "policy-engine",
+    "economic-guardrails",
+    "deterministic",
+    "autonomous-systems",
+    "risk-engine",
+    "machine-to-machine",
+    "web3",
+    "settlement-layer"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "echo 'No tests in core package directly'"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   }
 }

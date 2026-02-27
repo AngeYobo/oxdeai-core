@@ -4,4 +4,3 @@ dist/
 *.d.ts.map
 .env
 .env.local
-pnpm-lock.yaml
