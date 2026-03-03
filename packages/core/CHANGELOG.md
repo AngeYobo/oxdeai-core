@@ -7,6 +7,35 @@ This project follows Semantic Versioning.
 
 ---
 
+## [0.7.0] - 2026-03-03
+
+### Added
+- `ReplayEngine.verify(...)` offline audit verifier.
+- Strict verification mode returning `"inconclusive"` without state anchors.
+- Optional `STATE_CHECKPOINT` audit events (stateHash only).
+- `checkpoint_every_n_events` engine option.
+
+### Security
+- Strict mode refuses to certify traces without deterministic anchors.
+- PolicyId consistency enforced across event streams.
+- Offline recomputation of audit hash chain.
+
+### Verification
+- Chain continuity validation (GENESIS → headHash).
+- Monotonic timestamp enforcement.
+- Policy binding validation.
+- Checkpoint stateHash format validation (64-hex).
+
+
+---
+
+## [0.6.1] - 2026-03-03
+
+### Changed
+- Documentation updates (README): added snapshot section, badge, and clarified roadmap positioning.
+
+---
+
 ## [0.6.0] - 2026-03-03
 
 ### Added

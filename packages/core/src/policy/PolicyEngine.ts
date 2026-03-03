@@ -9,6 +9,7 @@ import { engineSignHmac } from "../crypto/sign.js";
 import { engineVerifyHmac } from "../crypto/verify.js";
 
 import { HashChainedLog } from "../audit/HashChainedLog.js";
+import type { AuditEvent } from "../audit/AuditLog.js";
 import { KillSwitchModule } from "./modules/KillSwitchModule.js";
 import { AllowlistModule } from "./modules/AllowlistModule.js";
 import { BudgetModule } from "./modules/BudgetModule.js";
@@ -46,6 +47,7 @@ export type EngineOptions = {
   deny_mode?: "collect-all" | "fail-fast";
   policyId?: string;
   strictDeterminism?: boolean;
+  checkpoint_every_n_events?: number;
 };
 
 function isObject(v: unknown): v is Record<string, unknown> {
@@ -98,6 +100,7 @@ const EXECUTE_MODULES: readonly PolicyModule[] = [
 export class PolicyEngine {
   private readonly opts: EngineOptions;
   private currentState?: State;
+  private auditEventCount = 0;
   public readonly audit: HashChainedLog = new HashChainedLog();
 
   constructor(opts: EngineOptions) {
@@ -195,6 +198,25 @@ export class PolicyEngine {
     return { ok: true };
   }
 
+  private appendAudit(event: AuditEvent): void {
+    this.audit.append(event);
+    this.auditEventCount += 1;
+  }
+
+  private maybeEmitCheckpoint(policyId: string, timestamp: number, state: State): void {
+    const every = this.opts.checkpoint_every_n_events;
+    if (every === undefined) return;
+    if (!Number.isInteger(every) || every <= 0) return;
+    if (this.auditEventCount % every !== 0) return;
+
+    this.appendAudit({
+      type: "STATE_CHECKPOINT",
+      stateHash: this.computeStateHashFor(state),
+      timestamp,
+      policyId
+    });
+  }
+
   evaluate(intent: Intent, state: State): EvaluateOutput {
     const out = this.evaluatePure(intent, state, { mode: "fail-fast" });
 
@@ -265,7 +287,7 @@ export class PolicyEngine {
     try {
       const intent_hash = intentHash(intent);
       const policyId = this.computePolicyId();
-      this.audit.append({
+      this.appendAudit({
         type: "INTENT_RECEIVED",
         intent_hash,
         agent_id: intent.agent_id,
@@ -293,7 +315,7 @@ export class PolicyEngine {
 
       if (denyReasons.length) {
         const out = { decision: "DENY" as const, reasons: denyReasons };
-        this.audit.append({
+        this.appendAudit({
           type: "DECISION",
           intent_hash,
           decision: "DENY",
@@ -302,6 +324,7 @@ export class PolicyEngine {
           timestamp: intent.timestamp,
           policyId
         });
+        this.maybeEmitCheckpoint(policyId, intent.timestamp, state);
         return out;
       }
 
@@ -349,7 +372,7 @@ export class PolicyEngine {
         });
       }
 
-      this.audit.append({
+      this.appendAudit({
         type: "DECISION",
         intent_hash,
         decision: "ALLOW",
@@ -359,7 +382,7 @@ export class PolicyEngine {
         policyId
       });
 
-      this.audit.append({
+      this.appendAudit({
         type: "AUTH_EMITTED",
         authorization_id,
         intent_hash,
@@ -367,6 +390,7 @@ export class PolicyEngine {
         timestamp: now,
         policyId
       });
+      this.maybeEmitCheckpoint(policyId, now, working);
 
       return { decision: "ALLOW", reasons: [], authorization, nextState: working };
     } catch {

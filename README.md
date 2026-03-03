@@ -17,10 +17,10 @@ autonomous agents (AI agents, workflows, bots) under strict economic constraints
 
 ## Repo Layout
 
-- `packages/core` — policy engine + invariants enforcement
-- `packages/sdk` — integration SDK
-- `packages/cli` — CLI harness / demo
-- `tests` — unit + invariants + fuzz/property tests
+- `packages/core` - policy engine + invariants enforcement
+- `packages/sdk` - integration SDK
+- `packages/cli` - CLI harness / demo
+- `tests` - unit + invariants + fuzz/property tests
 
 ## Quickstart
 

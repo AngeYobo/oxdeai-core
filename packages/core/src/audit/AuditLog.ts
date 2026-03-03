@@ -26,6 +26,10 @@ export type AuditEntry =
       type: "EXECUTION_ATTESTED";
       intent_hash: string;
       execution_ref: string;
+    })
+  | (AuditEntryBase & {
+      type: "STATE_CHECKPOINT";
+      stateHash: string;
     });
 
 export type AuditEvent = AuditEntry;

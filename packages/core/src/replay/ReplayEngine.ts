@@ -3,6 +3,8 @@ import { PolicyEngine } from "../policy/PolicyEngine.js";
 import type { EngineEvalOptions, EvaluatePureOutput } from "../policy/PolicyEngine.js";
 import type { Intent } from "../types/intent.js";
 import type { State } from "../types/state.js";
+import type { VerifyOptions, VerifyResult } from "./verify.js";
+import { verifyAuditEvents } from "./verify.js";
 
 export type ReplayResult = {
   outputs: EvaluatePureOutput[];
@@ -38,27 +40,18 @@ export class ReplayEngine {
     return this.replay(initialState, intents, opts);
   }
 
+  static verify(events: readonly AuditEntry[], opts?: VerifyOptions): VerifyResult {
+    return verifyAuditEvents(events, opts);
+  }
+
   static replay(events: readonly AuditEntry[], opts?: { policyId?: string }): AuditReplayResult {
-    const invariantViolations: string[] = [];
-    const expectedPolicyId = opts?.policyId;
-
-    if (expectedPolicyId) {
-      for (let i = 0; i < events.length; i++) {
-        const e = events[i];
-        if (e.policyId !== undefined && e.policyId !== expectedPolicyId) {
-          invariantViolations.push(
-            `policyId mismatch at event[${i}] (event=${e.policyId}, expected=${expectedPolicyId})`
-          );
-        }
-      }
-    }
-
-    for (let i = 1; i < events.length; i++) {
-      if (events[i].timestamp < events[i - 1].timestamp) {
-        invariantViolations.push(`non-monotonic timestamp at event[${i}]`);
-      }
-    }
-
+    const verified = verifyAuditEvents(events, {
+      policyId: opts?.policyId,
+      mode: "best-effort"
+    });
+    const invariantViolations = verified.violations.map((v) =>
+      v.detail ? `${v.code}${v.at !== undefined ? `@${v.at}` : ""}: ${v.detail}` : `${v.code}${v.at !== undefined ? `@${v.at}` : ""}`
+    );
     return { invariantViolations };
   }
 }

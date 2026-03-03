@@ -106,7 +106,8 @@ async function main() {
     policy_version: "v0.2",
     engine_secret: "dev-secret",
     authorization_ttl_seconds: 60,
-    deny_mode: "fail-fast"
+    deny_mode: "fail-fast",
+    checkpoint_every_n_events: 2
   });
 
   // ---- Test 1: Replay ----
@@ -288,8 +289,13 @@ async function main() {
   // ---- Replay equivalence smoke (audit-level invariants) ----
   {
     const events = engine.audit.snapshot();
+    assert(events.some((e) => e.type === "STATE_CHECKPOINT"), "at least one STATE_CHECKPOINT must be emitted");
+
     const replay = ReplayEngine.replay(events, { policyId: engine.computePolicyId() });
     assert(replay.invariantViolations.length === 0, "audit replay invariants must hold");
+
+    const strict = ReplayEngine.verify(events);
+    assert(strict.ok === true, "strict replay verify must pass with checkpoints");
   }
 
   // ---- Deterministic rebuild fingerprint ----

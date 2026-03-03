@@ -324,6 +324,24 @@ Snapshots are:
 
 ---
 
+## Replay Verification (v0.7)
+
+`ReplayEngine.verify` recomputes `auditHeadHash` offline from the provided events, and validates policy binding (`policyId`) plus non-decreasing timestamps.
+
+Strict mode returns `inconclusive` unless the trace contains at least one `STATE_CHECKPOINT` (`stateHash` anchor).
+
+```ts
+import { PolicyEngine, ReplayEngine } from "@oxdeai/core";
+const engine = new PolicyEngine({ policy_version: "v0.6", engine_secret: "secret", authorization_ttl_seconds: 60, checkpoint_every_n_events: 2 });
+engine.evaluatePure(intent1, state);
+const out = engine.evaluatePure(intent2, state);
+const events = engine.audit.snapshot();
+const verified = ReplayEngine.verify(events, { policyId: engine.computePolicyId() }); // strict by default
+console.log(verified.ok, verified.status); // true, "ok" when checkpoints exist
+```
+
+---
+
 ## Roadmap
 
 ### v0.6 - Stateful Canonical Snapshots (shipped)
@@ -333,11 +351,11 @@ Snapshots are:
 * Versioned canonical snapshot format (formatVersion=1)
 * Strict determinism completeness (no implicit entropy)
 
-### v0.7 -  Replay as Verification
+### v0.7 - Replay as Verification (shipped)
 
 * Replay verification API
-* Optional state checkpoints
-* Misuse hardening (explicit “inconclusive” mode)
+* Optional deterministic state checkpoints (`STATE_CHECKPOINT`)
+* Misuse hardening (`strict` => `inconclusive` without state anchors)
 
 ### v0.8 -  Host Integration Adapters
 
