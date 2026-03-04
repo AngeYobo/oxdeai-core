@@ -4,7 +4,7 @@ import type { EngineEvalOptions, EvaluatePureOutput } from "../policy/PolicyEngi
 import type { Intent } from "../types/intent.js";
 import type { State } from "../types/state.js";
 import type { VerifyOptions, VerifyResult } from "./verify.js";
-import { verifyAuditEvents } from "./verify.js";
+import { verifyReplayEvents } from "./verify.js";
 
 export type ReplayResult = {
   outputs: EvaluatePureOutput[];
@@ -41,11 +41,11 @@ export class ReplayEngine {
   }
 
   static verify(events: readonly AuditEntry[], opts?: VerifyOptions): VerifyResult {
-    return verifyAuditEvents(events, opts);
+    return verifyReplayEvents(events, opts);
   }
 
   static replay(events: readonly AuditEntry[], opts?: { policyId?: string }): AuditReplayResult {
-    const verified = verifyAuditEvents(events, {
+    const verified = verifyReplayEvents(events, {
       policyId: opts?.policyId,
       mode: "best-effort"
     });
