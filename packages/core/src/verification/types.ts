@@ -1,37 +1,39 @@
 export type VerificationStatus = "ok" | "invalid" | "inconclusive";
 
-export type AuditVerificationMode = "strict" | "best-effort";
+export type VerificationViolationCode =
+  | "MALFORMED_EVENT"
+  | "POLICY_ID_MISSING"
+  | "POLICY_ID_MISMATCH"
+  | "MIXED_POLICY_ID"
+  | "NON_MONOTONIC_TIMESTAMP"
+  | "HASH_CHAIN_INVALID"
+  | "NO_STATE_ANCHOR"
+  | "SNAPSHOT_CORRUPT"
+  | "ENVELOPE_MALFORMED";
 
-export type VerificationResult = {
-  status: VerificationStatus;
-  violations: string[];
+export type VerificationViolation = {
+  code: VerificationViolationCode;
+  message?: string;
+  index?: number;
 };
 
-export type SnapshotVerificationResult = VerificationResult & {
-  stateHash?: string;
+export type VerificationResult = {
+  ok: boolean;
+  status: VerificationStatus;
+  violations: VerificationViolation[];
+
   policyId?: string;
-  formatVersion?: number;
+  stateHash?: string;
+  auditHeadHash?: string;
 };
 
 export type VerifyAuditOptions = {
   expectedPolicyId?: string;
-  mode?: AuditVerificationMode;
+  mode?: "strict" | "best-effort";
   requireStateAnchors?: boolean;
 };
 
-export type AuditVerificationViolation =
-  | { code: "MALFORMED_EVENT"; message: string; index?: number }
-  | { code: "POLICY_ID_MISSING"; message: string; index?: number }
-  | { code: "POLICY_ID_MISMATCH"; message: string; expected: string; got: string; index?: number }
-  | { code: "MIXED_POLICY_ID"; message: string }
-  | { code: "NON_MONOTONIC_TIMESTAMP"; message: string; prev: number; next: number; index: number }
-  | { code: "HASH_CHAIN_INVALID"; message: string }
-  | { code: "NO_STATE_ANCHOR"; message: string };
-
-export type AuditVerificationResult = {
-  ok: boolean;
-  status: VerificationStatus;
-  policyId?: string;
-  auditHeadHash?: string;
-  violations: AuditVerificationViolation[];
+export type VerifyEnvelopeOptions = {
+  expectedPolicyId?: string;
+  mode?: "strict" | "best-effort";
 };

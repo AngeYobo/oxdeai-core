@@ -1,80 +1,70 @@
 import { sha256HexFromJson } from "../crypto/hashes.js";
 import { decodeCanonicalState } from "../snapshot/CanonicalCodec.js";
-import type { SnapshotVerificationResult } from "./types.js";
+import type { VerificationResult, VerificationViolation } from "./types.js";
+
+function sortViolations(violations: VerificationViolation[]): VerificationViolation[] {
+  return [...violations].sort((a, b) => {
+    if (a.code < b.code) return -1;
+    if (a.code > b.code) return 1;
+    return (a.index ?? 0) - (b.index ?? 0);
+  });
+}
 
 function invalid(
-  code: string,
-  extra?: Partial<Pick<SnapshotVerificationResult, "policyId" | "formatVersion">>
-): SnapshotVerificationResult {
+  message: string,
+  extra?: Partial<Pick<VerificationResult, "policyId">>
+): VerificationResult {
   return {
+    ok: false,
     status: "invalid",
-    violations: [code],
-    policyId: extra?.policyId,
-    formatVersion: extra?.formatVersion
+    violations: sortViolations([{ code: "SNAPSHOT_CORRUPT", message }]),
+    policyId: extra?.policyId
   };
 }
 
 export function verifySnapshot(
   snapshotBytes: Uint8Array,
   opts?: { expectedPolicyId?: string }
-): SnapshotVerificationResult {
+): VerificationResult {
   let snapshot: ReturnType<typeof decodeCanonicalState>;
 
   try {
     snapshot = decodeCanonicalState(snapshotBytes);
   } catch {
-    try {
-      const parsed = JSON.parse(new TextDecoder().decode(snapshotBytes)) as unknown;
-      if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
-        const obj = parsed as Record<string, unknown>;
-
-        if (obj.formatVersion !== 1) {
-          return invalid("SNAPSHOT_UNSUPPORTED_VERSION", {
-            formatVersion: typeof obj.formatVersion === "number" ? obj.formatVersion : undefined,
-            policyId: typeof obj.policyId === "string" ? obj.policyId : undefined
-          });
-        }
-
-        if (!("modules" in obj) || typeof obj.modules !== "object" || obj.modules === null || Array.isArray(obj.modules)) {
-          return invalid("SNAPSHOT_MALFORMED_MODULES", {
-            policyId: typeof obj.policyId === "string" ? obj.policyId : undefined,
-            formatVersion: 1
-          });
-        }
-
-        if (typeof obj.policyId !== "string" || obj.policyId.length === 0) {
-          return invalid("SNAPSHOT_MISSING_POLICY_ID", { formatVersion: 1 });
-        }
-      }
-    } catch {
-      // Keep decode error as authoritative when payload cannot be interpreted.
-    }
-
-    return invalid("SNAPSHOT_DECODE_FAILED");
+    return invalid("snapshot decode failed");
   }
 
   if (snapshot.formatVersion !== 1) {
-    return invalid("SNAPSHOT_UNSUPPORTED_VERSION", {
-      policyId: snapshot.policyId,
-      formatVersion: snapshot.formatVersion
+    return invalid("unsupported snapshot formatVersion", {
+      policyId: snapshot.policyId
     });
   }
 
   if (typeof snapshot.policyId !== "string" || snapshot.policyId.length === 0) {
-    return invalid("SNAPSHOT_MISSING_POLICY_ID", { formatVersion: 1 });
+    return {
+      ok: false,
+      status: "invalid",
+      violations: sortViolations([{ code: "POLICY_ID_MISSING", message: "snapshot policyId is required" }])
+    };
   }
 
   if (opts?.expectedPolicyId && opts.expectedPolicyId !== snapshot.policyId) {
-    return invalid("SNAPSHOT_POLICY_ID_MISMATCH", {
-      policyId: snapshot.policyId,
-      formatVersion: 1
-    });
+    return {
+      ok: false,
+      status: "invalid",
+      violations: sortViolations([
+        {
+          code: "POLICY_ID_MISMATCH",
+          message: `snapshot policyId does not match expected policyId`
+        }
+      ]),
+      policyId: snapshot.policyId
+    };
   }
 
   if (!snapshot.modules || typeof snapshot.modules !== "object" || Array.isArray(snapshot.modules)) {
-    return invalid("SNAPSHOT_MALFORMED_MODULES", {
-      policyId: snapshot.policyId,
-      formatVersion: 1
+    return invalid("snapshot modules must be an object", {
+      policyId: snapshot.policyId
     });
   }
 
@@ -93,16 +83,15 @@ export function verifySnapshot(
     });
 
     return {
+      ok: true,
       status: "ok",
       violations: [],
       stateHash,
-      policyId: snapshot.policyId,
-      formatVersion: 1
+      policyId: snapshot.policyId
     };
   } catch {
-    return invalid("SNAPSHOT_MALFORMED_MODULES", {
-      policyId: snapshot.policyId,
-      formatVersion: 1
+    return invalid("snapshot modules are malformed", {
+      policyId: snapshot.policyId
     });
   }
 }

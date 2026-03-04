@@ -1,11 +1,15 @@
 import { createHash } from "node:crypto";
 import { canonicalJson } from "../crypto/hashes.js";
 import type { AuditEvent } from "../audit/AuditLog.js";
-import type {
-  AuditVerificationResult,
-  AuditVerificationViolation,
-  VerifyAuditOptions
-} from "./types.js";
+import type { VerificationResult, VerificationViolation, VerifyAuditOptions } from "./types.js";
+
+function sortViolations(violations: VerificationViolation[]): VerificationViolation[] {
+  return [...violations].sort((a, b) => {
+    if (a.code < b.code) return -1;
+    if (a.code > b.code) return 1;
+    return (a.index ?? 0) - (b.index ?? 0);
+  });
+}
 
 function canonicalizeAuditEvent(event: AuditEvent): Uint8Array {
   const normalized = {
@@ -31,19 +35,19 @@ function asAuditEvent(value: unknown): value is AuditEvent {
 export function verifyAuditEvents(
   events: readonly AuditEvent[],
   opts?: VerifyAuditOptions
-): AuditVerificationResult {
+): VerificationResult {
   if (!Array.isArray(events)) {
     return {
       ok: false,
       status: "invalid",
-      violations: [{ code: "MALFORMED_EVENT", message: "events must be an array" }]
+      violations: sortViolations([{ code: "MALFORMED_EVENT", message: "events must be an array" }])
     };
   }
 
   const mode = opts?.mode ?? "strict";
   const requireStateAnchors = opts?.requireStateAnchors ?? (mode === "strict");
 
-  const violations: AuditVerificationViolation[] = [];
+  const violations: VerificationViolation[] = [];
   const policyIds = new Set<string>();
   let inferredPolicyId: string | undefined;
   let hasStateAnchor = false;
@@ -68,9 +72,7 @@ export function verifyAuditEvents(
     if (lastTimestamp !== undefined && event.timestamp < lastTimestamp) {
       violations.push({
         code: "NON_MONOTONIC_TIMESTAMP",
-        message: "event timestamps must be non-decreasing",
-        prev: lastTimestamp,
-        next: event.timestamp,
+        message: `event timestamps must be non-decreasing (prev=${lastTimestamp}, next=${event.timestamp})`,
         index: i
       });
     }
@@ -86,9 +88,7 @@ export function verifyAuditEvents(
       } else if (event.policyId !== opts.expectedPolicyId) {
         violations.push({
           code: "POLICY_ID_MISMATCH",
-          message: "event.policyId does not match expectedPolicyId",
-          expected: opts.expectedPolicyId,
-          got: event.policyId,
+          message: `event.policyId mismatch (expected=${opts.expectedPolicyId}, got=${event.policyId})`,
           index: i
         });
       }
@@ -98,10 +98,7 @@ export function verifyAuditEvents(
       policyIds.add(event.policyId);
     }
 
-    if (
-      event.type === "STATE_CHECKPOINT" &&
-      typeof event.stateHash === "string"
-    ) {
+    if (event.type === "STATE_CHECKPOINT" && typeof event.stateHash === "string") {
       hasStateAnchor = true;
     }
 
@@ -122,8 +119,9 @@ export function verifyAuditEvents(
     violations.push({ code: "NO_STATE_ANCHOR", message: "no STATE_CHECKPOINT event with stateHash found" });
   }
 
-  const hasInvalidViolation = violations.some((v) => v.code !== "NO_STATE_ANCHOR");
-  const hasAnchorViolation = violations.some((v) => v.code === "NO_STATE_ANCHOR");
+  const sorted = sortViolations(violations);
+  const hasInvalidViolation = sorted.some((v) => v.code !== "NO_STATE_ANCHOR");
+  const hasAnchorViolation = sorted.some((v) => v.code === "NO_STATE_ANCHOR");
 
   if (hasInvalidViolation) {
     return {
@@ -131,7 +129,7 @@ export function verifyAuditEvents(
       status: "invalid",
       policyId: inferredPolicyId,
       auditHeadHash: head,
-      violations
+      violations: sorted
     };
   }
 
@@ -141,7 +139,7 @@ export function verifyAuditEvents(
       status: "inconclusive",
       policyId: inferredPolicyId,
       auditHeadHash: head,
-      violations
+      violations: sorted
     };
   }
 

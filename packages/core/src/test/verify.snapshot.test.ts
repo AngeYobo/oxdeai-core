@@ -56,10 +56,10 @@ test("verifySnapshot ok on encoded canonical snapshot", () => {
   const { engine, bytes } = buildSnapshotBytes();
 
   const out = verifySnapshot(bytes);
+  assert.equal(out.ok, true);
   assert.equal(out.status, "ok");
   assert.deepEqual(out.violations, []);
   assert.equal(out.policyId, engine.computePolicyId());
-  assert.equal(out.formatVersion, 1);
   assert.ok(typeof out.stateHash === "string" && out.stateHash.length === 64);
 });
 
@@ -68,13 +68,13 @@ test("verifySnapshot detects policy mismatch", () => {
 
   const out = verifySnapshot(bytes, { expectedPolicyId: "deadbeef" });
   assert.equal(out.status, "invalid");
-  assert.ok(out.violations.includes("SNAPSHOT_POLICY_ID_MISMATCH"));
+  assert.ok(out.violations.some((v) => v.code === "POLICY_ID_MISMATCH"));
 });
 
 test("verifySnapshot fails on corrupt bytes", () => {
   const out = verifySnapshot(new Uint8Array([1, 2, 3]));
   assert.equal(out.status, "invalid");
-  assert.ok(out.violations.includes("SNAPSHOT_DECODE_FAILED"));
+  assert.ok(out.violations.some((v) => v.code === "SNAPSHOT_CORRUPT"));
 });
 
 test("verifySnapshot fails on unsupported formatVersion", () => {
@@ -87,7 +87,7 @@ test("verifySnapshot fails on unsupported formatVersion", () => {
 
   const out = verifySnapshot(bytes);
   assert.equal(out.status, "invalid");
-  assert.ok(out.violations.includes("SNAPSHOT_UNSUPPORTED_VERSION"));
+  assert.ok(out.violations.some((v) => v.code === "SNAPSHOT_CORRUPT"));
 });
 
 test("verifySnapshot fails on malformed modules", () => {
@@ -100,5 +100,5 @@ test("verifySnapshot fails on malformed modules", () => {
 
   const out = verifySnapshot(bytes);
   assert.equal(out.status, "invalid");
-  assert.ok(out.violations.includes("SNAPSHOT_MALFORMED_MODULES"));
+  assert.ok(out.violations.some((v) => v.code === "SNAPSHOT_CORRUPT"));
 });
