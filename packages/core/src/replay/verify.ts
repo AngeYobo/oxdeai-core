@@ -41,7 +41,7 @@ function computeNextHash(prev: string, event: AuditEntry): string {
     .digest("hex");
 }
 
-export function verifyAuditEvents(events: readonly AuditEntry[], opts?: VerifyOptions): VerifyResult {
+export function verifyReplayEvents(events: readonly AuditEntry[], opts?: VerifyOptions): VerifyResult {
   const mode = opts?.mode ?? "strict";
   const violations: VerifyViolation[] = [];
   let checkpointCount = 0;
