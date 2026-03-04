@@ -1,7 +1,6 @@
 # @oxdeai/core
 
 Deterministic Economic Containment Engine for Autonomous Systems
-> Deterministic · Canonical Snapshots · Property-Tested
 
 [![npm version](https://img.shields.io/npm/v/@oxdeai/core.svg)](https://www.npmjs.com/package/@oxdeai/core)
 [![license](https://img.shields.io/npm/l/@oxdeai/core.svg)](https://github.com/AngeYobo/oxdeai-core/blob/main/packages/core/LICENSE)
@@ -23,6 +22,61 @@ No heuristics.
 No post-fact monitoring.
 
 Just deterministic pre-execution containment.
+
+---
+
+## Overview
+
+`@oxdeai/core` is a deterministic economic containment engine for autonomous systems.
+
+It enforces economic invariants before an action executes and emits deterministic artifacts that can be verified independently.
+
+The library exposes:
+
+* deterministic policy evaluation
+* canonical state snapshots
+* hash-chained audit events
+* stateless verification primitives
+
+---
+
+## Key Concepts
+
+### PolicyEngine
+
+Deterministic evaluation of action intents against a policy state.
+
+### Canonical Snapshot
+
+Deterministic binary representation of the policy state.
+
+### Audit Chain
+
+Hash-chained sequence of execution events.
+
+### Verification Envelope
+
+Portable artifact combining:
+
+* snapshot
+* audit events
+* policy identity
+
+---
+
+## Stateless Verification
+
+Stateless verification API:
+
+* `verifySnapshot(snapshotBytes)`
+* `verifyAuditEvents(events)`
+* `verifyEnvelope(envelopeBytes)`
+
+All three return `VerificationResult` with status:
+
+* `ok`
+* `invalid`
+* `inconclusive`
 
 ---
 
@@ -83,7 +137,13 @@ It is the deterministic outer boundary.
 
 ## Deterministic Guarantees
 
-v0.6.0 formalizes deterministic snapshot and identity guarantees:
+Deterministic invariants enforced and tested:
+
+* I1 Canonical hashing ignores key insertion order
+* I2 Snapshot round-trip is idempotent
+* I3 Decision equivalence across import/export
+* I4 Replay verification determinism
+* I5 Cross-process determinism
 
 * `policyId` - content-addressed engine configuration
 * `stateHash` - canonical snapshot hash
@@ -119,6 +179,17 @@ Same `(engine version + modules + options + state + intent sequence)`
 No randomness.
 No hidden clocks (in strict mode).
 No non-deterministic ordering.
+
+---
+
+## Minimal Example
+
+```ts
+import { PolicyEngine, verifyEnvelope } from "@oxdeai/core";
+const decision = engine.evaluate(intent, state);
+const result = verifyEnvelope(envelopeBytes);
+if (result.ok) console.log("artifact verified");
+```
 
 ---
 
@@ -204,7 +275,7 @@ import { PolicyEngine } from "@oxdeai/core";
 import type { State, Intent } from "@oxdeai/core";
 
 const engine = new PolicyEngine({
-  policy_version: "v0.6",
+  policy_version: "v0.9",
   engine_secret: process.env.OXDEAI_ENGINE_SECRET!,
   authorization_ttl_seconds: 60,
   strictDeterminism: false
@@ -213,7 +284,7 @@ const engine = new PolicyEngine({
 const now = 1730000000; // injected timestamp (seconds)
 
 const state: State = {
-  policy_version: "v0.6",
+  policy_version: "v0.9",
   period_id: "2026-02",
   kill_switch: { global: false, agents: {} },
   allowlists: {},
@@ -333,7 +404,7 @@ const stateStore = new FileStateStore("./policy-state.bin");
 const auditSink = new FileAuditSink("./audit.ndjson");
 
 const engine = new PolicyEngine({
-  policy_version: "v0.6",
+  policy_version: "v0.9",
   engine_secret: "secret",
   authorization_ttl_seconds: 60,
   stateStore,
@@ -358,7 +429,7 @@ Strict mode returns `inconclusive` unless the trace contains at least one `STATE
 
 ```ts
 import { PolicyEngine, ReplayEngine } from "@oxdeai/core";
-const engine = new PolicyEngine({ policy_version: "v0.6", engine_secret: "secret", authorization_ttl_seconds: 60, checkpoint_every_n_events: 2 });
+const engine = new PolicyEngine({ policy_version: "v0.9", engine_secret: "secret", authorization_ttl_seconds: 60, checkpoint_every_n_events: 2 });
 engine.evaluatePure(intent1, state);
 const out = engine.evaluatePure(intent2, state);
 const events = engine.audit.snapshot();
@@ -388,6 +459,17 @@ console.log(verified.ok, verified.status); // true, "ok" when checkpoints exist
 * StateStore interface
 * AuditSink interface
 * Minimal in-memory + file adapters
+
+### v0.9 — Stateless Verification Surface (shipped)
+* Pure verifiers: `verifySnapshot`, `verifyAuditEvents`, `verifyEnvelope`
+* Portable Verification Envelope (snapshot + audit events)
+* Unified `VerificationResult` (ok / invalid / inconclusive)
+* Deterministic violation ordering (stable outputs across runtimes)
+
+### v1.0 — Protocol Stability Release (planned)
+* API freeze for verification surface + envelope codec
+* Spec lock (formats, invariants, violation codes)
+* Backwards-compat policy and conformance tests
 
 ---
 

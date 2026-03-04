@@ -7,6 +7,50 @@ This project follows Semantic Versioning.
 
 ---
 
+## [0.9.3] - 2026-03-04
+
+Documentation release before v1.0.
+
+### Added
+- Protocol documentation.
+- Verification Envelope specification.
+- Minimal example script for envelope verification.
+- Deterministic invariants documentation.
+
+### Changed
+- README expanded with stateless verification API and protocol concepts.
+
+### Notes
+- No runtime behavior changes.
+
+---
+
+## [0.9.2] - 2026-03-04
+### Added
+- Verification Envelope codec (`encodeEnvelope` / `decodeEnvelope`).
+- Pure verifier `verifyEnvelope(...)` composing snapshot + audit verification.
+
+### Changed
+- Unified verification results to `VerificationResult` shape across stateless verifiers.
+- Deterministic violation ordering (stable sort).
+
+---
+
+## [0.9.1] - 2026-03-04
+### Added
+- Pure verifier `verifyAuditEvents(...)` for audit chain validation (stateless).
+
+### Changed
+- Replay verification helper renamed to avoid export collision (`verifyReplayEvents`).
+
+---
+
+## [0.9.0] - 2026-03-03
+### Added
+- Pure verifier `verifySnapshot(snapshotBytes, opts?)` (stateless snapshot integrity check).
+
+---
+
 ## [0.8.0] - 2026-03-03
 
 **Host Integration Adapters**
