@@ -1,0 +1,94 @@
+{
+  "version": "1.0.0",
+  "hash_algorithm": "SHA256",
+  "separator": "0x0A",
+  "chain_rule": "head_(k+1) = SHA256(head_k || 0x0A || canonical(event_k))",
+  "vectors": [
+    {
+      "id": "audit-chain-001",
+      "input": "OxDeAI::GENESIS::v1",
+      "expected": {
+        "genesis_hex": "db393af6a9cf189c2b250a0a7dea0c776a3d446c9f51999426f933c53416238b"
+      }
+    },
+    {
+      "id": "audit-chain-002",
+      "input": {
+        "head_0": "db393af6a9cf189c2b250a0a7dea0c776a3d446c9f51999426f933c53416238b",
+        "event_0": {
+          "type": "INTENT_RECEIVED",
+          "intent_hash": "d17664c344609e5bd498107bcf12d31bfa289afaa3516b34d96f1d6785a8e0b9",
+          "agent_id": "agent-1",
+          "timestamp": 1730000000,
+          "policyId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "canonical_event_0": "{\"agent_id\":\"agent-1\",\"intent_hash\":\"d17664c344609e5bd498107bcf12d31bfa289afaa3516b34d96f1d6785a8e0b9\",\"policyId\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"timestamp\":1730000000,\"type\":\"INTENT_RECEIVED\"}"
+      },
+      "expected": {
+        "head_1": "c673c25dd89343acc3475712bdf30e41f1ef0e3a41f7bc8454885646e720ab08"
+      }
+    },
+    {
+      "id": "audit-chain-003",
+      "input": {
+        "genesis": "db393af6a9cf189c2b250a0a7dea0c776a3d446c9f51999426f933c53416238b",
+        "events": [
+          {
+            "type": "INTENT_RECEIVED",
+            "intent_hash": "d17664c344609e5bd498107bcf12d31bfa289afaa3516b34d96f1d6785a8e0b9",
+            "agent_id": "agent-1",
+            "timestamp": 1730000000,
+            "policyId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "type": "DECISION",
+            "intent_hash": "d17664c344609e5bd498107bcf12d31bfa289afaa3516b34d96f1d6785a8e0b9",
+            "decision": "ALLOW",
+            "reasons": [],
+            "policy_version": "v1.0.0",
+            "timestamp": 1730000000,
+            "policyId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "type": "AUTH_EMITTED",
+            "authorization_id": "85439fe3e0a7fc1803928c281403ea54a3fd4de1b1da8c5934f0f0b1ecd76d14",
+            "intent_hash": "d17664c344609e5bd498107bcf12d31bfa289afaa3516b34d96f1d6785a8e0b9",
+            "expires_at": 1730000060,
+            "timestamp": 1730000000,
+            "policyId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        ]
+      },
+      "expected": {
+        "head_1": "c673c25dd89343acc3475712bdf30e41f1ef0e3a41f7bc8454885646e720ab08",
+        "head_2": "470e52c94946ed14693a379b95d56b477ade9413c53539d48cea4e9b2daaa186",
+        "head_3": "62cdcbdf9e0e59c0aa95be154e0930d4049805f509f3a9800332c12fd127e6c1"
+      }
+    },
+    {
+      "id": "audit-chain-004",
+      "input": {
+        "original_event_0": {
+          "type": "INTENT_RECEIVED",
+          "intent_hash": "d17664c344609e5bd498107bcf12d31bfa289afaa3516b34d96f1d6785a8e0b9",
+          "agent_id": "agent-1",
+          "timestamp": 1730000000,
+          "policyId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "mutated_event_0": {
+          "type": "TAMPERED",
+          "intent_hash": "d17664c344609e5bd498107bcf12d31bfa289afaa3516b34d96f1d6785a8e0b9",
+          "agent_id": "agent-1",
+          "timestamp": 1730000000,
+          "policyId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "head_0": "db393af6a9cf189c2b250a0a7dea0c776a3d446c9f51999426f933c53416238b"
+      },
+      "expected": {
+        "original_head_1": "c673c25dd89343acc3475712bdf30e41f1ef0e3a41f7bc8454885646e720ab08",
+        "mutated_head_1": "73f0ee8e9fd465b67096611386b745640cd9e7a89ad2b288bc4a7cc08a70cbaa",
+        "must_not_equal_original_head_1": true
+      }
+    }
+  ]
+}

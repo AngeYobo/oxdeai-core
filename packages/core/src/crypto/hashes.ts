@@ -3,6 +3,23 @@ import type { Intent } from "../types/intent.js";
 import type { State } from "../types/state.js";
 import type { Authorization } from "../types/authorization.js";
 
+const INTENT_BINDING_FIELDS = [
+  "intent_id",
+  "agent_id",
+  "action_type",
+  "depth",
+  "amount",
+  "asset",
+  "target",
+  "timestamp",
+  "metadata_hash",
+  "nonce",
+  "type",
+  "authorization_id",
+  "tool",
+  "tool_call"
+] as const;
+
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
@@ -28,9 +45,13 @@ export function sha256HexFromJson(value: unknown): string {
 }
 /** @public */
 export function intentHash(intent: Intent): string {
-  const { signature: _sig, ...rest } = intent;
-  void _sig;
-  return sha256HexFromJson(rest);
+  const src = intent as unknown as Record<string, unknown>;
+  const binding: Record<string, unknown> = {};
+  for (const key of INTENT_BINDING_FIELDS) {
+    const value = src[key];
+    if (value !== undefined) binding[key] = value;
+  }
+  return sha256HexFromJson(binding);
 }
 /** @public */
 export function stateSnapshotHash(state: State): string {

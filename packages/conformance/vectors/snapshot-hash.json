@@ -1,0 +1,130 @@
+{
+  "version": "1.0.0",
+  "vectors": [
+    {
+      "id": "snapshot-hash-001",
+      "input_state": {
+        "policy_version": "v1.0.0",
+        "period_id": "period-1",
+        "kill_switch": {
+          "global": false,
+          "agents": {}
+        },
+        "allowlists": {},
+        "budget": {
+          "budget_limit": {
+            "agent-1": "5000000"
+          },
+          "spent_in_period": {
+            "agent-1": "0"
+          }
+        },
+        "max_amount_per_action": {
+          "agent-1": "2000000"
+        },
+        "velocity": {
+          "config": {
+            "window_seconds": 60,
+            "max_actions": 10
+          },
+          "counters": {}
+        },
+        "replay": {
+          "window_seconds": 300,
+          "max_nonces_per_agent": 256,
+          "nonces": {}
+        },
+        "concurrency": {
+          "max_concurrent": {
+            "agent-1": 3
+          },
+          "active": {},
+          "active_auths": {}
+        },
+        "recursion": {
+          "max_depth": {
+            "agent-1": 5
+          }
+        },
+        "tool_limits": {
+          "window_seconds": 60,
+          "max_calls": {
+            "agent-1": 50
+          },
+          "calls": {}
+        }
+      },
+      "expected": {
+        "snapshot_base64": "eyJlbmdpbmVWZXJzaW9uIjoidW5rbm93biIsImZvcm1hdFZlcnNpb24iOjEsIm1vZHVsZXMiOnsiQWxsb3dsaXN0TW9kdWxlIjp7ImFjdGlvbl90eXBlcyI6W10sImFzc2V0cyI6W10sInRhcmdldHMiOltdfSwiQnVkZ2V0TW9kdWxlIjp7ImJ1ZGdldF9saW1pdCI6eyJhZ2VudC0xIjoiNTAwMDAwMCJ9LCJtYXhfYW1vdW50X3Blcl9hY3Rpb24iOnsiYWdlbnQtMSI6IjIwMDAwMDAifSwic3BlbnRfaW5fcGVyaW9kIjp7ImFnZW50LTEiOiIwIn19LCJDb25jdXJyZW5jeU1vZHVsZSI6eyJhY3RpdmUiOnsiYWdlbnQtMSI6MH0sImFjdGl2ZV9hdXRocyI6eyJhZ2VudC0xIjp7fX0sIm1heF9jb25jdXJyZW50Ijp7ImFnZW50LTEiOjN9fSwiS2lsbFN3aXRjaE1vZHVsZSI6eyJhZ2VudHMiOnt9LCJnbG9iYWwiOmZhbHNlfSwiUmVjdXJzaW9uRGVwdGhNb2R1bGUiOnsibWF4X2RlcHRoIjp7ImFnZW50LTEiOjV9fSwiUmVwbGF5TW9kdWxlIjp7Im1heF9ub25jZXNfcGVyX2FnZW50IjoyNTYsIm5vbmNlcyI6e30sIndpbmRvd19zZWNvbmRzIjozMDB9LCJUb29sQW1wbGlmaWNhdGlvbk1vZHVsZSI6eyJjYWxscyI6e30sIm1heF9jYWxscyI6eyJhZ2VudC0xIjo1MH0sIm1heF9jYWxsc19ieV90b29sIjp7fSwid2luZG93X3NlY29uZHMiOjYwfSwiVmVsb2NpdHlNb2R1bGUiOnsiY29uZmlnIjp7Im1heF9hY3Rpb25zIjoxMCwid2luZG93X3NlY29uZHMiOjYwfSwiY291bnRlcnMiOnt9fX0sInBvbGljeUlkIjoiYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYSJ9",
+        "state_hash": "af9020dcf23b68ca00ae29a5b1371d892763e0a49fe07866fbdba88b0b2f56a8"
+      }
+    },
+    {
+      "id": "snapshot-hash-002",
+      "input_state": {
+        "policy_version": "v1.0.0",
+        "period_id": "period-1",
+        "kill_switch": {
+          "global": false,
+          "agents": {}
+        },
+        "allowlists": {},
+        "budget": {
+          "budget_limit": {
+            "agent-1": "999999999999999999"
+          },
+          "spent_in_period": {
+            "agent-1": "0"
+          }
+        },
+        "max_amount_per_action": {
+          "agent-1": "2000000"
+        },
+        "velocity": {
+          "config": {
+            "window_seconds": 60,
+            "max_actions": 10
+          },
+          "counters": {}
+        },
+        "replay": {
+          "window_seconds": 300,
+          "max_nonces_per_agent": 256,
+          "nonces": {}
+        },
+        "concurrency": {
+          "max_concurrent": {
+            "agent-1": 3
+          },
+          "active": {},
+          "active_auths": {}
+        },
+        "recursion": {
+          "max_depth": {
+            "agent-1": 5
+          }
+        },
+        "tool_limits": {
+          "window_seconds": 60,
+          "max_calls": {
+            "agent-1": 50
+          },
+          "calls": {}
+        }
+      },
+      "expected": {
+        "snapshot_base64": "eyJlbmdpbmVWZXJzaW9uIjoidW5rbm93biIsImZvcm1hdFZlcnNpb24iOjEsIm1vZHVsZXMiOnsiQWxsb3dsaXN0TW9kdWxlIjp7ImFjdGlvbl90eXBlcyI6W10sImFzc2V0cyI6W10sInRhcmdldHMiOltdfSwiQnVkZ2V0TW9kdWxlIjp7ImJ1ZGdldF9saW1pdCI6eyJhZ2VudC0xIjoiOTk5OTk5OTk5OTk5OTk5OTk5In0sIm1heF9hbW91bnRfcGVyX2FjdGlvbiI6eyJhZ2VudC0xIjoiMjAwMDAwMCJ9LCJzcGVudF9pbl9wZXJpb2QiOnsiYWdlbnQtMSI6IjAifX0sIkNvbmN1cnJlbmN5TW9kdWxlIjp7ImFjdGl2ZSI6eyJhZ2VudC0xIjowfSwiYWN0aXZlX2F1dGhzIjp7ImFnZW50LTEiOnt9fSwibWF4X2NvbmN1cnJlbnQiOnsiYWdlbnQtMSI6M319LCJLaWxsU3dpdGNoTW9kdWxlIjp7ImFnZW50cyI6e30sImdsb2JhbCI6ZmFsc2V9LCJSZWN1cnNpb25EZXB0aE1vZHVsZSI6eyJtYXhfZGVwdGgiOnsiYWdlbnQtMSI6NX19LCJSZXBsYXlNb2R1bGUiOnsibWF4X25vbmNlc19wZXJfYWdlbnQiOjI1Niwibm9uY2VzIjp7fSwid2luZG93X3NlY29uZHMiOjMwMH0sIlRvb2xBbXBsaWZpY2F0aW9uTW9kdWxlIjp7ImNhbGxzIjp7fSwibWF4X2NhbGxzIjp7ImFnZW50LTEiOjUwfSwibWF4X2NhbGxzX2J5X3Rvb2wiOnt9LCJ3aW5kb3dfc2Vjb25kcyI6NjB9LCJWZWxvY2l0eU1vZHVsZSI6eyJjb25maWciOnsibWF4X2FjdGlvbnMiOjEwLCJ3aW5kb3dfc2Vjb25kcyI6NjB9LCJjb3VudGVycyI6e319fSwicG9saWN5SWQiOiJhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIn0=",
+        "state_hash": "f2e093c7ccaa15d4a67b0fbc932945f8e58c2945863b0155b6e94374ed370afd",
+        "normalized_budget_limit": "999999999999999999"
+      }
+    },
+    {
+      "id": "snapshot-hash-003",
+      "input_snapshot_base64": "eyJlbmdpbmVWZXJzaW9uIjoidW5rbm93biIsImZvcm1hdFZlcnNpb24iOjEsIm1vZHVsZXMiOnsiQWxsb3dsaXN0TW9kdWxlIjp7ImFjdGlvbl90eXBlcyI6W10sImFzc2V0cyI6W10sInRhcmdldHMiOltdfSwiQnVkZ2V0TW9kdWxlIjp7ImJ1ZGdldF9saW1pdCI6eyJhZ2VudC0xIjoiNTAwMDAwMCJ9LCJtYXhfYW1vdW50X3Blcl9hY3Rpb24iOnsiYWdlbnQtMSI6IjIwMDAwMDAifSwic3BlbnRfaW5fcGVyaW9kIjp7ImFnZW50LTEiOiIwIn19LCJDb25jdXJyZW5jeU1vZHVsZSI6eyJhY3RpdmUiOnsiYWdlbnQtMSI6MH0sImFjdGl2ZV9hdXRocyI6eyJhZ2VudC0xIjp7fX0sIm1heF9jb25jdXJyZW50Ijp7ImFnZW50LTEiOjN9fSwiS2lsbFN3aXRjaE1vZHVsZSI6eyJhZ2VudHMiOnt9LCJnbG9iYWwiOmZhbHNlfSwiUmVjdXJzaW9uRGVwdGhNb2R1bGUiOnsibWF4X2RlcHRoIjp7ImFnZW50LTEiOjV9fSwiUmVwbGF5TW9kdWxlIjp7Im1heF9ub25jZXNfcGVyX2FnZW50IjoyNTYsIm5vbmNlcyI6e30sIndpbmRvd19zZWNvbmRzIjozMDB9LCJUb29sQW1wbGlmaWNhdGlvbk1vZHVsZSI6eyJjYWxscyI6e30sIm1heF9jYWxscyI6eyJhZ2VudC0xIjo1MH0sIm1heF9jYWxsc19ieV90b29sIjp7fSwid2luZG93X3NlY29uZHMiOjYwfSwiVmVsb2NpdHlNb2R1bGUiOnsiY29uZmlnIjp7Im1heF9hY3Rpb25zIjoxMCwid2luZG93X3NlY29uZHMiOjYwfSwiY291bnRlcnMiOnt9fX0sInBvbGljeUlkIjoiYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYSJ9",
+      "expected": {
+        "state_hash": "af9020dcf23b68ca00ae29a5b1371d892763e0a49fe07866fbdba88b0b2f56a8"
+      },
+      "invariant": "equals snapshot-hash-001"
+    }
+  ]
+}

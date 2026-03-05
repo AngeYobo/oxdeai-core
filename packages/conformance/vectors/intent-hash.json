@@ -1,0 +1,87 @@
+{
+  "version": "1.0.0",
+  "vectors": [
+    {
+      "id": "intent-hash-001",
+      "input": {
+        "intent_id": "intent-42",
+        "agent_id": "agent-1",
+        "action_type": "PAYMENT",
+        "amount": "1000000",
+        "target": "merchant-1",
+        "timestamp": 1730000000,
+        "metadata_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "nonce": "42",
+        "signature": "sig-placeholder",
+        "depth": 0,
+        "tool": "openai.responses",
+        "tool_call": true,
+        "type": "EXECUTE"
+      },
+      "expected": {
+        "hash": "aea574158239260e0161c0a23d641730d532952a7f538f7537e7ad4c03fe08db"
+      }
+    },
+    {
+      "id": "intent-hash-002",
+      "input": {
+        "tool_call": true,
+        "tool": "openai.responses",
+        "depth": 0,
+        "nonce": "42",
+        "timestamp": 1730000000,
+        "target": "merchant-1",
+        "amount": "1000000",
+        "action_type": "PAYMENT",
+        "agent_id": "agent-1",
+        "metadata_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "intent_id": "intent-42",
+        "type": "EXECUTE",
+        "signature": "sig-placeholder"
+      },
+      "expected": {
+        "hash": "aea574158239260e0161c0a23d641730d532952a7f538f7537e7ad4c03fe08db"
+      },
+      "invariant": "equals intent-hash-001"
+    },
+    {
+      "id": "intent-hash-003",
+      "input": {
+        "intent_id": "intent-42",
+        "agent_id": "agent-1",
+        "action_type": "PAYMENT",
+        "amount": "1000000",
+        "target": "merchant-1",
+        "timestamp": 1730000000,
+        "metadata_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "nonce": "42",
+        "signature": "sig-placeholder",
+        "depth": 0,
+        "tool": "openai.responses",
+        "tool_call": true,
+        "type": "EXECUTE",
+        "_internal_trace_id": "ignored"
+      },
+      "binding_fields": [
+        "intent_id",
+        "agent_id",
+        "action_type",
+        "depth",
+        "amount",
+        "asset",
+        "target",
+        "timestamp",
+        "metadata_hash",
+        "nonce",
+        "type",
+        "authorization_id",
+        "tool",
+        "tool_call"
+      ],
+      "expected": {
+        "hash": "aea574158239260e0161c0a23d641730d532952a7f538f7537e7ad4c03fe08db"
+      },
+      "invariant": "equals intent-hash-001"
+    }
+  ]
+}
